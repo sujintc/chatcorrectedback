@@ -863,10 +863,9 @@ mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true, useUnifiedTopol
 app.use('/uploads', express.static(__dirname + '/uploads'));
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({
+app.use(cors())
  
-  origin: process.env.CLIENT_URL,
-}));
+
 
 // Helper function to get user data from request
 async function getUserDataFromRequest(req) {
