@@ -15,29 +15,19 @@ const app = express();
 const jwtSecret = process.env.JWT_SECRET;
 const bcryptSalt = bcrypt.genSaltSync(10);
 
-// Middleware
-app.use(express.json());
-app.use(cookieParser());
-
-// CORS configuration
-const allowedOrigins = [process.env.CLIENT_URL];
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true, // Allows cookies to be sent cross-origin
-};
-
-app.use(cors(corsOptions));
-
 // Database connection
-mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGO_URL)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('Failed to connect to MongoDB', err));
+
+// Middleware
+app.use('/uploads', express.static(__dirname + '/uploads'));
+app.use(express.json());
+app.use(cookieParser());
+app.use(cors({
+  origin: 'http://localhost:5173', // replace with your frontend domain
+  credentials: true
+}));
 
 // Helper function to get user data from request
 async function getUserDataFromRequest(req) {
@@ -83,7 +73,7 @@ app.get('/profile', (req, res) => {
   const token = req.cookies?.token;
   if (token) {
     jwt.verify(token, jwtSecret, (err, userData) => {
-      if (err) res.status(500).json('Token verification failed');
+      if (err) return res.status(500).json('Token verification failed');
       res.json(userData);
     });
   } else {
@@ -134,12 +124,12 @@ app.post('/register', async (req, res) => {
 });
 
 // Start server
-const server = app.listen(process.env.PORT || 4040, () => {
-  console.log(`Server listening on port ${server.address().port}`);
+const server = app.listen(4040, () => {
+  console.log('Server listening on port 4040');
 });
 
 // WebSocket setup
-const wss = new ws.WebSocketServer({ server });
+const wss = new ws.Server({ server });
 wss.on('connection', (connection, req) => {
 
   function notifyAboutOnlinePeople() {
@@ -177,6 +167,7 @@ wss.on('connection', (connection, req) => {
           const { userId, username } = userData;
           connection.userId = userId;
           connection.username = username;
+          notifyAboutOnlinePeople(); // Notify after setting user data
         });
       }
     }
