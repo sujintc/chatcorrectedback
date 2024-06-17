@@ -25,7 +25,7 @@ app.use('/uploads', express.static(__dirname + '/uploads'));
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-  origin: 'https://chatcorrectedfront.vercel.app/', // replace with your frontend domain
+  origin: 'https://chatcorrectedfront.vercel.app', // replace with your frontend domain
   credentials: true
 }));
 
